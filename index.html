@@ -1,0 +1,633 @@
+<!doctype html>
+<html lang="es"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Porropoli</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&amp;family=Alegreya:ital,wght@0,400;0,600;1,400&amp;family=Alegreya+Sans:wght@400;500;700&amp;display=swap">
+<style>
+/* Layout: taberna oscura; arriba la demo jugable (tablero + panel del jugador), abajo el reglamento por secciones */
+:root{
+  --wood:#1c130d; --wood-2:#2a1c13; --wood-3:#3a281b; --line:#4a3424;
+  --gold:#d9a441; --gold-dim:#8a6526; --gold-soft:#f1d08a;
+  --parch:#f3e3c1; --parch-2:#e6cf9f; --ink:#2b1a0e; --ink-2:#5b3d22;
+  --fg:#f2e6d0; --fg-2:#c9b593;
+  --green:#7cc06a; --green-ink:#173404; --red:#d9533f; --red-ink:#fff4ee;
+  --act:#e7b94c; --act-ink:#2b1a0e; --opitz:#5b3f8f; --opitz-ink:#f3eaff; --chino:#0e0907;
+  --display:"Cinzel", Georgia, serif; --card:"Alegreya", Georgia, serif; --body:"Alegreya Sans", system-ui, sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+.nojs{background:#f3e3c1;color:#2b1a0e;border:3px solid #e0433b;border-radius:12px;padding:14px 16px;font-size:16px;line-height:1.5}
+body{margin:0;-webkit-text-size-adjust:100%;background:var(--wood);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.6;margin:0;
+  background-image:repeating-linear-gradient(90deg,rgba(255,255,255,.015) 0 2px,transparent 2px 9px)}
+.wrap{max-width:1000px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px;display:flex;flex-direction:column;gap:52px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;letter-spacing:.02em}
+h2{font-size:clamp(22px,4vw,30px);color:var(--gold-soft)}
+h3{font-size:18px;color:var(--gold-soft)}
+p{margin:0;max-width:68ch}
+a{color:var(--gold-soft)}
+.eyebrow{text-transform:uppercase;letter-spacing:.14em;font-size:12px;color:var(--gold);font-weight:700}
+.small{font-size:14px;color:var(--fg-2)}
+.num{font-variant-numeric:tabular-nums}
+section{display:flex;flex-direction:column;gap:16px}
+.sec-head{display:flex;flex-direction:column;gap:6px;border-bottom:1px solid var(--gold-dim);padding-bottom:10px}
+
+.hero{display:grid;grid-template-columns:1.3fr 1fr;gap:28px;align-items:center}
+.hero-l{display:flex;flex-direction:column;gap:14px}
+.logo{font-family:var(--display);font-weight:800;font-size:clamp(46px,10vw,88px);line-height:.95;color:var(--gold);text-shadow:0 2px 0 #6b4a17,0 4px 0 #3a2508,0 10px 24px rgba(0,0,0,.6)}
+.edition{border:1px solid var(--gold-dim);padding:3px 12px;border-radius:999px;color:var(--gold-soft);font-size:13px;width:fit-content}
+.goal{background:var(--parch);color:var(--ink);border:3px solid var(--gold);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:8px}
+.goal b.t{font-family:var(--display);font-size:20px}
+.goal p{font-family:var(--card)}
+
+.btn{font-family:var(--body);font-size:14px;font-weight:700;background:var(--wood-3);color:var(--fg);border:1px solid var(--gold-dim);border-radius:8px;padding:7px 12px;cursor:pointer}
+.btn.main{font-family:var(--display);font-size:17px;background:var(--gold);color:var(--ink);border-color:var(--gold);padding:10px 18px}
+.btn:focus-visible,.cell:focus-visible{outline:2px solid var(--gold-soft);outline-offset:2px}
+
+.play{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px;align-items:start}
+.board{display:grid;grid-template-columns:repeat(11,1fr);grid-template-rows:repeat(11,1fr);gap:3px;aspect-ratio:1;max-width:100%;
+  background:#3a2614;padding:8px;border-radius:14px;border:3px solid var(--gold-dim);box-shadow:0 0 0 2px #120b07,0 18px 40px rgba(0,0,0,.5)}
+.cell{position:relative;border-radius:50%;display:flex;align-items:center;justify-content:center;text-align:center;font-size:clamp(7px,1.2vw,10px);line-height:1.05;cursor:pointer;border:2px solid rgba(0,0,0,.45);font-weight:700;padding:1px}
+.cell .lbl{overflow:hidden;max-width:100%}
+.c-V{background:var(--green);color:var(--green-ink)}
+.c-R{background:var(--red);color:var(--red-ink)}
+.c-A{background:var(--act);color:var(--act-ink);font-family:var(--display);font-size:clamp(12px,2.4vw,20px)}
+.c-O{background:var(--opitz);color:var(--opitz-ink)}
+.c-X{border-radius:8px;background:var(--parch);color:var(--ink);font-family:var(--display);font-size:clamp(7px,1.1vw,10px)}
+.cell.sel{outline:3px solid #fff;outline-offset:0;z-index:3}
+.token{position:absolute;inset:-4px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px var(--gold),0 0 14px rgba(255,255,255,.7);pointer-events:none;z-index:4}
+.c-X .token{border-radius:10px}
+.chino{position:absolute;right:-5px;top:-6px;width:clamp(14px,2.6vw,20px);height:clamp(14px,2.6vw,20px);background:var(--gold);clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);z-index:5;pointer-events:none}
+.chino::after{content:"";position:absolute;inset:3px;background:var(--chino);clip-path:inherit}
+.center{grid-row:2/span 9;grid-column:2/span 9;background:radial-gradient(circle at 50% 40%,#4a3220,#2a1a0f);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:6px}
+.center .t{font-family:var(--display);font-weight:800;color:var(--gold);font-size:clamp(18px,4vw,32px)}
+.decks{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center}
+.deck{width:clamp(40px,8vw,64px);aspect-ratio:5/7;border-radius:6px;border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;text-align:center;font-size:clamp(8px,1.3vw,11px);font-weight:700;line-height:1.1;padding:2px}
+.mini-wheel{width:clamp(60px,14vw,110px);aspect-ratio:1}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--fg-2)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px;margin-right:5px;border:1px solid rgba(0,0,0,.4)}
+.cellinfo{font-size:14px;color:var(--fg-2);min-height:44px}
+.cellinfo b{color:var(--gold-soft)}
+
+.pp{display:flex;flex-direction:column;gap:12px;min-width:0}
+.box{background:var(--wood-2);border:1px solid var(--wood-3);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.tray{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.slot{border:2px dashed var(--line);border-radius:10px;padding:6px 4px;text-align:center;font-size:12px;color:var(--fg-2);min-height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.slot.on{border-style:solid;border-color:var(--gold);background:rgba(217,164,65,.12);color:var(--fg)}
+.slot b{font-size:15px;color:var(--gold-soft)}
+.jar{display:flex;align-items:center;gap:10px}
+.jar-tube{flex:1;height:26px;border:2px solid var(--parch-2);border-radius:8px;position:relative;overflow:hidden;background:rgba(255,255,255,.04)}
+.jar-fill{position:absolute;inset:0 auto 0 0;width:0;background:repeating-linear-gradient(90deg,#e9e2d0 0 8px,#cfc6b0 8px 10px);transition:width .5s}
+.jar-line{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--red)}
+.jar b{font-family:var(--display);font-size:22px;color:var(--gold-soft);min-width:56px;text-align:right}
+.hand{display:flex;gap:6px;flex-wrap:wrap}
+.hc{font-size:12px;font-weight:700;border-radius:6px;padding:3px 8px}
+.msg{background:var(--parch);color:var(--ink);border-radius:12px;padding:14px 16px;border:2px solid var(--gold-dim);font-family:var(--card);font-size:16px;min-height:120px;display:flex;flex-direction:column;gap:6px}
+.msg .h{font-family:var(--display);font-weight:800;font-size:20px;line-height:1.15}
+.msg .k{font-family:var(--body);font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--ink-2)}
+.msg .l{font-family:var(--body);font-size:14px;color:var(--ink-2)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;min-height:46px}
+.pwheel{width:110px;height:110px;flex:none}
+#pneedle{transform-origin:160px 160px;transition:transform 2.2s cubic-bezier(.15,.85,.2,1)}
+.stagebar{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.stagebar span{font-size:11px;text-align:center;padding:3px 2px;border-radius:6px;background:var(--wood-3);color:var(--fg-2);font-weight:700}
+.stagebar span.on{background:var(--gold);color:var(--ink)}
+
+.flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:12px;align-items:stretch}
+.step{background:var(--wood-2);border:1px solid var(--wood-3);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:6px}
+.step b{font-family:var(--display);color:var(--gold-soft);font-size:15px}
+.arrow{align-self:center;color:var(--gold);font-size:22px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.panel{background:var(--wood-2);border:1px solid var(--wood-3);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.panel ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px;font-size:15px}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--wood-3);vertical-align:top}
+th{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);font-weight:700}
+td.v,th.v{text-align:center;font-variant-numeric:tabular-nums;white-space:nowrap}
+td:first-child{white-space:nowrap}
+.cta + .tbl-wrap td:first-child{font-weight:700;color:var(--gold-soft)}
+.combo{background:rgba(224,67,59,.25);color:#ffd9d3;font-weight:700}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:7px}
+.parch{background:var(--parch);color:var(--ink);border-radius:14px;padding:18px;border:3px solid var(--gold);display:flex;flex-direction:column;gap:10px}
+.parch h3{color:var(--ink);font-size:20px}
+.parch p,.parch td{font-family:var(--card);color:var(--ink)}
+.parch th{color:var(--ink-2)}
+.parch td,.parch th{border-color:#d8c299}
+.choices{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.choice{background:var(--parch);color:var(--ink);border-radius:12px;padding:14px;border:3px solid var(--gold-dim);display:flex;flex-direction:column;gap:6px}
+.choice b{font-family:var(--display);font-size:17px}
+.choice span{font-family:var(--card);font-size:15px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.card{background:#120b07;border-radius:14px;padding:6px;border:2px solid var(--gold-dim);display:flex}
+.card-in{background:var(--parch);color:var(--ink);border-radius:10px;flex:1;display:flex;flex-direction:column;overflow:hidden}
+.card.trap .card-in{background:#d9cbe9}
+.card-top{padding:6px 10px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;display:flex;justify-content:space-between;gap:6px}
+.card-name{font-family:var(--display);font-weight:800;font-size:16px;padding:8px 10px 2px;line-height:1.15}
+.card-txt{font-family:var(--card);font-size:15px;padding:4px 10px 12px;line-height:1.4}
+.cta{background:var(--wood-2);border:2px solid var(--gold);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:10px}
+
+@media (max-width:780px){
+  .hero,.play,.two{grid-template-columns:1fr}
+  .flow{grid-template-columns:1fr}
+  .arrow{transform:rotate(90deg);justify-self:center}
+  .choices{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){#pneedle,.jar-fill{transition:none}}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+<div id="nojs" class="nojs"><b>Esta vista previa no deja jugar.</b> Puedes leer todo, pero para jugar la partida de prueba abre el enlace que te mandó Renato en Safari o Chrome.</div>
+
+
+
+<header class="hero">
+  <div class="hero-l">
+    <span class="edition">Primera edición · en construcción · reglas v0.7</span>
+    <div class="logo">Porropoli</div>
+    <p>El juego de mesa de nuestro grupo. Recorres el barrio, la Patrona y los bajones de siempre juntando lo necesario para fumar. Cada ronda termina en una junta, un partido o un carrete en la casa de alguno de nosotros, y ahí se fuma, se come y se sobrevive a los sustos. Es caótico como Mario Party: nadie está a salvo hasta el final.</p>
+    <p class="small">De 4 a 8 jugadores, con tablero físico y una app en el celular que pone las tallas internas.</p>
+  </div>
+  <div class="goal">
+    <span class="eyebrow" style="color:var(--ink-2)">El objetivo</span>
+    <b class="t">Llenar tu frasco hasta La Pálida</b>
+    <p>Cada fumada echa fichas de humo a tu frasco. Cuando llegas a la línea, el siguiente evento es tu prueba final: si lo terminas todavía arriba, ganas. Si un susto te baja, sigue el juego.</p>
+  </div>
+</header>
+
+<section aria-labelledby="h-demo">
+  <div class="sec-head"><span class="eyebrow">Pruébalo</span><h2 id="h-demo">Juega una partida de prueba</h2></div>
+  <p>Una versión corta para que veas cómo se siente. Juegas solo: tres tiradas por ronda y después un Evento Malulo. Ganaste el 2d6 inicial, así que partes con el moledor y un encendedor. Meta: 15 de humo.</p>
+  <div class="play">
+    <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+      <div class="board" id="board" role="grid" aria-label="Tablero de Porropoli"><div class="cell c-X" tabindex="0" role="button" aria-label="Casa del Esteban" style="grid-area: 11 / 11;"><span class="lbl">Casa del Esteban</span><span class="token"></span></div><div class="cell c-V" tabindex="0" role="button" aria-label="Plaza del Esteban" style="grid-area: 11 / 10;"><span class="lbl">Plaza Esteban</span></div><div class="cell c-R" tabindex="0" role="button" aria-label="Cementerio" style="grid-area: 11 / 9;"><span class="lbl">Cemen­terio</span></div><div class="cell c-V" tabindex="0" role="button" aria-label="Plaza del Diego" style="grid-area: 11 / 8;"><span class="lbl">Plaza Diego</span></div><div class="cell c-A" tabindex="0" role="button" aria-label="Acción" style="grid-area: 11 / 7;"><span class="lbl">?</span></div><div class="cell c-V" tabindex="0" role="button" aria-label="Feria La Frontera" style="grid-area: 11 / 6;"><span class="lbl">Feria</span></div><div class="cell c-V" tabindex="0" role="button" aria-label="Casilla verde" style="grid-area: 11 / 5;"><span class="lbl"></span></div><div class="cell c-R" tabindex="0" role="button" aria-label="Casilla roja" style="grid-area: 11 / 4;"><span class="lbl"></span></div><div class="cell c-A" tabindex="0" role="button" aria-label="Acción" style="grid-area: 11 / 3;"><span class="lbl">?</span></div><div class="cell c-V" tabindex="0" role="button" aria-label="Casilla verde" style="grid-area: 11 / 2;"><span class="lbl"></span></div><div class="cell c-X" tabindex="0" role="button" aria-label="Patrona" style="grid-area: 11 / 1;"><span class="lbl">Patrona</span></div><div class="cell c-V" tabindex="0" role="button" aria-label="La Araucana" style="grid-area: 10 / 1;"><span class="lbl">Arau­cana</span></div><div class="cell c-R" tabindex="0" role="button" aria-label="Inspectoría" style="grid-area: 9 / 1;"><span class="lbl">Inspec­toría</span></div><div class="cell c-V" tabindex="0" role="button" aria-label="Kiosco de la Nona" style="grid-area: 8 / 1;"><span class="lbl">Nona</span><span class="chino"></span></div><div class="cell c-A" tabindex="0" role="button" aria-label="Acción" style="grid-area: 7 / 1;"><span class="lbl">?</span></div><div class="cell c-O" tabindex="0" role="button" aria-label="El Opitz" style="grid-area: 6 / 1;"><span class="lbl">Opitz</span></div><div class="cell c-V" tabindex="0" role="button" aria-label="Plaza del colegio" style="grid-area: 5 / 1;"><span class="lbl">Plaza cole</span></div><div class="cell c-R" tabindex="0" role="button" aria-label="Casilla roja" style="grid-area: 4 / 1;"><span class="lbl"></span></div><div class="cell c-A" tabindex="0" role="button" aria-label="Acción" style="grid-area: 3 / 1;"><span class="lbl">?</span></div><div class="cell c-V" tabindex="0" role="button" aria-label="Casilla verde" style="grid-area: 2 / 1;"><span class="lbl"></span></div><div class="cell c-X" tabindex="0" role="button" aria-label="Tío Coco" style="grid-area: 1 / 1;"><span class="lbl">Tío Coco</span></div><div class="cell c-V" tabindex="0" role="button" aria-label="El Panul" style="grid-area: 1 / 2;"><span class="lbl">Panul</span></div><div class="cell c-R" tabindex="0" role="button" aria-label="Casilla roja" style="grid-area: 1 / 3;"><span class="lbl"></span></div><div class="cell c-V" tabindex="0" role="button" aria-label="El Guaye" style="grid-area: 1 / 4;"><span class="lbl">Guaye</span></div><div class="cell c-A" tabindex="0" role="button" aria-label="Acción" style="grid-area: 1 / 5;"><span class="lbl">?</span></div><div class="cell c-V" tabindex="0" role="button" aria-label="La Jin Jan" style="grid-area: 1 / 6;"><span class="lbl">Jin Jan</span></div><div class="cell c-V" tabindex="0" role="button" aria-label="Terminal de buses" style="grid-area: 1 / 7;"><span class="lbl">Termi­nal</span></div><div class="cell c-R" tabindex="0" role="button" aria-label="Casilla roja" style="grid-area: 1 / 8;"><span class="lbl"></span></div><div class="cell c-A" tabindex="0" role="button" aria-label="Acción" style="grid-area: 1 / 9;"><span class="lbl">?</span></div><div class="cell c-V" tabindex="0" role="button" aria-label="Casilla verde" style="grid-area: 1 / 10;"><span class="lbl"></span></div><div class="cell c-X" tabindex="0" role="button" aria-label="Los Bloques" style="grid-area: 1 / 11;"><span class="lbl">Los Bloques</span></div><div class="cell c-V" tabindex="0" role="button" aria-label="Ropita lo Bio" style="grid-area: 2 / 11;"><span class="lbl">Ropita</span></div><div class="cell c-R" tabindex="0" role="button" aria-label="Kenny Pilcha" style="grid-area: 3 / 11;"><span class="lbl">Kenny</span></div><div class="cell c-V" tabindex="0" role="button" aria-label="El Remanso" style="grid-area: 4 / 11;"><span class="lbl">Remanso</span></div><div class="cell c-A" tabindex="0" role="button" aria-label="Acción" style="grid-area: 5 / 11;"><span class="lbl">?</span></div><div class="cell c-O" tabindex="0" role="button" aria-label="El Opitz" style="grid-area: 6 / 11;"><span class="lbl">Opitz</span></div><div class="cell c-V" tabindex="0" role="button" aria-label="Papayón" style="grid-area: 7 / 11;"><span class="lbl">Papa­yón</span></div><div class="cell c-R" tabindex="0" role="button" aria-label="Casilla roja" style="grid-area: 8 / 11;"><span class="lbl"></span></div><div class="cell c-A" tabindex="0" role="button" aria-label="Acción" style="grid-area: 9 / 11;"><span class="lbl">?</span></div><div class="cell c-V" tabindex="0" role="button" aria-label="Casilla verde" style="grid-area: 10 / 11;"><span class="lbl"></span></div><div class="center"><div class="t">Porropoli</div><div class="decks"><div class="deck" style="background:#b8dc97;color:#1f3a10">Insumos</div><svg class="mini-wheel" viewBox="0 0 320 320" aria-hidden="true"><path d="M160 160 L160 10 A150 150 0 0 1 281.3525491562421 248.16778784387097 Z" fill="#8fca6b" stroke="#120b07" stroke-width="3"></path><path d="M160 160 L281.3525491562421 248.16778784387097 A150 150 0 0 1 71.83221215612905 281.3525491562421 Z" fill="#e3c25e" stroke="#120b07" stroke-width="3"></path><path d="M160 160 L71.83221215612905 281.3525491562421 A150 150 0 0 1 17.341522555726982 113.64745084375784 Z" fill="#e48f5c" stroke="#120b07" stroke-width="3"></path><path d="M160 160 L17.341522555726982 113.64745084375784 A150 150 0 0 1 113.64745084375787 17.341522555726982 Z" fill="#6fa6dc" stroke="#120b07" stroke-width="3"></path><path d="M160 160 L113.64745084375787 17.341522555726982 A150 150 0 0 1 159.99999999999997 10 Z" fill="#e0433b" stroke="#120b07" stroke-width="3"></path><circle cx="160" cy="160" r="150" fill="none" stroke="#d9a441" stroke-width="10"></circle></svg><div class="deck" style="background:#e7b94c;color:#2b1a0e">Acción</div></div></div></div>
+      <div class="legend">
+        <span><i style="background:var(--green)"></i>Verde</span>
+        <span><i style="background:var(--red)"></i>Roja</span>
+        <span><i style="background:var(--act)"></i>Acción</span>
+        <span><i style="background:var(--opitz)"></i>Opitz</span>
+        <span><i style="background:var(--chino);border-color:var(--gold)"></i>Tío Chino (estrella negra)</span>
+      </div>
+      <div class="cellinfo" id="cellinfo" aria-live="polite">Toca cualquier casilla para ver qué hace.</div>
+    </div>
+    <div class="pp">
+      <div class="box">
+        <span class="eyebrow">Tu bandeja</span>
+        <div class="tray">
+          <div class="slot on"><span>Moledor</span><b>✓</b></div>
+          <div class="slot on"><span>Encendedor</span><b>✓</b></div>
+          <div class="slot on" id="s-pap"><span>Papelillos</span><b id="n-pap">2</b></div>
+          <div class="slot" id="s-cog"><span>Cogollos</span><b id="n-cog">0</b></div>
+        </div>
+        <div class="small" id="coglist">Sin cogollo todavía.</div>
+      </div>
+      <div class="box">
+        <span class="eyebrow">Tu frasco</span>
+        <div class="jar"><div class="jar-tube" aria-hidden="true"><div class="jar-fill" id="jarfill" style="width: 0%;"></div><div class="jar-line" style="left:75%"></div></div><b class="num" id="humo">0</b></div>
+        <div class="small" id="jarnote">La línea roja es La Pálida (15).</div>
+      </div>
+      <div class="box">
+        <span class="eyebrow">Tus cartas de Acción</span>
+        <div class="hand" id="hand"><span class="small">Ninguna.</span></div>
+      </div>
+      <div class="stagebar" id="stagebar" hidden=""><span>Llegada</span><span>Desarrollo</span><span>Clímax</span><span>Desenlace</span></div>
+      <div class="msg" id="msg" aria-live="polite"><span class="k">Preparación</span><div class="h">Tu bandeja inicial</div><div class="l">Ganaste el 2d6: tienes moledor y encendedor.</div><div class="l">Robaste 2 cartas de Insumos: 2 papelillos.</div><div class="l">La estrella negra del tablero es el Tío Chino.</div></div>
+      <div class="actions" id="actions"><button class="btn main" id="b-start">Empezar</button></div>
+    </div>
+  </div>
+  <p class="small">En la demo los eventos usan reglas simplificadas. En el juego real cada casa tiene sus propias reglas, y hay más jugadores con los que compartir, robar y negociar.</p>
+</section>
+
+<section aria-labelledby="h-ronda">
+  <div class="sec-head"><span class="eyebrow">El reglamento, corto</span><h2 id="h-ronda">Una ronda</h2></div>
+  <div class="flow">
+    <div class="step"><b>1. Turnos en el tablero</b><span class="small">Cada uno tira 1d6, avanza y hace lo que diga su casilla. Así va llenando su bandeja.</span></div>
+    <div class="arrow" aria-hidden="true">→</div>
+    <div class="step"><b>2. Evento Malulo</b><span class="small">La app revela adónde van todos: una junta, un partido, un paseo o un bajón. Tiene cuatro etapas y es donde se fuma.</span></div>
+    <div class="arrow" aria-hidden="true">→</div>
+    <div class="step"><b>3. Mirar los frascos</b><span class="small">Si alguien llegó a La Pálida, el próximo evento es su prueba final. Si no, otra ronda.</span></div>
+  </div>
+</section>
+
+<section aria-labelledby="h-inicio">
+  <div class="sec-head"><span class="eyebrow">Antes de partir</span><h2 id="h-inicio">La bandeja y el reparto</h2></div>
+  <div class="two">
+    <div class="panel">
+      <h3>La bandeja</h3>
+      <p>Cada jugador tiene una bandeja de armado con huecos para moledor, encendedor, papelillo y cogollo. Las piezas son fichas 3D que se encajan, así todos ven cómo vas armando.</p>
+      <p>Para girar la ruleta necesitas <b>moledor, encendedor y un cogollo</b>. El papelillo solo se gasta si sale pito o blunt. Si no tienes, se lo pides a alguien y esa persona entra gratis al compartido.</p>
+    </div>
+    <div class="panel">
+      <h3>El reparto inicial</h3>
+      <p>Todos parten con la bandeja vacía y 2 cartas de Insumos. Después tiran 2d6: el más alto se lleva el único moledor de la partida y los que siguen, los encendedores.</p>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Jugadores</th><th class="v">Moledor</th><th class="v">Encendedores</th></tr></thead>
+        <tbody><tr><td>4 o 5</td><td class="v">1</td><td class="v">2</td></tr><tr><td>6 o 7</td><td class="v">1</td><td class="v">3</td></tr><tr><td>8</td><td class="v">1</td><td class="v">4</td></tr></tbody>
+      </table></div>
+      <p class="small">Si te falta el moledor o el encendedor, lo robas con cartas de Acción o le pides entrar a la ronda del que lo tiene. El dueño decide a quién invita.</p>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="h-tablero">
+  <div class="sec-head"><span class="eyebrow">40 casillas</span><h2 id="h-tablero">El tablero</h2></div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Casilla</th><th class="v">Cant.</th><th>Qué pasa</th></tr></thead>
+    <tbody>
+      <tr><td><span class="dot" style="background:var(--green)"></span>Verde</td><td class="v">18</td><td>Robas una carta de Insumos. Si estás en verde cuando empieza el Evento Malulo, cada fumada tuya vale +1.</td></tr>
+      <tr><td><span class="dot" style="background:var(--red)"></span>Roja</td><td class="v">8</td><td>Pierdes 1 de humo. Si estás en roja cuando empieza el evento, cada fumada tuya vale −1.</td></tr>
+      <tr><td><span class="dot" style="background:var(--act)"></span>Acción</td><td class="v">8</td><td>Robas una carta de Acción.</td></tr>
+      <tr><td><span class="dot" style="background:var(--opitz)"></span>Opitz</td><td class="v">2</td><td>La pena máxima: tiras 1d6 y con un 1 te quedaste pegado con el Opitz.</td></tr>
+      <tr><td>Esquinas</td><td class="v">4</td><td>Casa del Esteban (salida), Patrona (cárcel), Tío Coco (bajón y Cucaracha) y Los Bloques (junta casera).</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small">Los lugares del grupo (las plazas, el Panul, el Guaye, Ropita lo Bio, Kenny Pilcha y otros) van pintados sobre las casillas verdes y rojas.</p>
+  <div class="parch">
+    <span class="eyebrow" style="color:var(--ink-2)">La estrella negra</span>
+    <h3>El Tío Chino</h3>
+    <p>Es una ficha que se para en una casilla verde y se mueve por el tablero, como la estrella de Mario Party. Si pasas o caes donde está, le puedes comprar: pagas 3 de humo y sacas a ciegas de su bolsa negra. Nunca vende nada bueno, pero con lo que vende pueden pasar cosas buenas. Después de cada venta se cambia de casilla.</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Bolsa negra</th><th class="v">Cant.</th><th>Qué hace</th></tr></thead>
+      <tbody>
+        <tr><td>Prensado paraguayo</td><td class="v">7</td><td>Cuenta como porrito. Con un bombazo, es el +10.</td></tr>
+        <tr><td>Orégano</td><td class="v">5</td><td>Lo metes boca abajo en un compartido: tú +2 y los demás 0. Si alguien te acusa antes de girar y acierta, pierdes 2.</td></tr>
+        <tr><td>Cogollo mojado</td><td class="v">4</td><td>Cuenta como porrito. Desde casilla verde, el bonus vale doble.</td></tr>
+        <tr><td>Polen raro</td><td class="v">2</td><td>En tu próxima fumada giras la ruleta dos veces y eliges.</td></tr>
+        <tr><td><b>Estrella negra</b></td><td class="v">2</td><td>Vale 5 de humo que nadie te puede sacar ni robar.</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<section aria-labelledby="h-ruleta">
+  <div class="sec-head"><span class="eyebrow">Cuando fumas</span><h2 id="h-ruleta">La ruleta y la tabla</h2></div>
+  <p>En el Evento Malulo, el que puede fumar gira la ruleta física del centro del tablero: pito 35%, blunt 25%, pipazo 20%, bongazo 15% y bombazo 5%. El humo depende del método y del cogollo.</p>
+  <div class="two">
+    <div class="panel">
+      <h3>Humo base</h3>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Método</th><th class="v">Porrito</th><th class="v">Regular</th><th class="v">Indoor</th></tr></thead>
+        <tbody id="t-base"><tr><td><span class="dot" style="background:#8fca6b"></span>Pito</td><td class="v">+1</td><td class="v">+2</td><td class="v">+4</td></tr><tr><td><span class="dot" style="background:#e3c25e"></span>Blunt</td><td class="v">+2</td><td class="v">+3</td><td class="v">+5</td></tr><tr><td><span class="dot" style="background:#e48f5c"></span>Pipazo</td><td class="v">+2</td><td class="v">+3</td><td class="v">+5</td></tr><tr><td><span class="dot" style="background:#6fa6dc"></span>Bongazo</td><td class="v">+3</td><td class="v">+5</td><td class="v">+7</td></tr><tr><td><span class="dot" style="background:#e0433b"></span>Bombazo</td><td class="v combo">+10</td><td class="v">+6</td><td class="v">+8</td></tr></tbody>
+      </table></div>
+      <p class="small"><b style="color:#ffd9d3">Bombazo de porrito: +10.</b> El cogollo que todos desprecian, con el método más raro, da el máximo del juego.</p>
+    </div>
+    <div class="panel">
+      <h3>Compartidos: humo por persona</h3>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Fumada</th><th class="v">1–2</th><th class="v">3–4</th><th class="v">5+</th></tr></thead>
+        <tbody id="t-share"><tr><td><span class="dot" style="background:#8fca6b"></span>Pito de porrito</td><td class="v">+1</td><td class="v">+1</td><td class="v">+1</td></tr><tr><td><span class="dot" style="background:#8fca6b"></span>Pito de regular</td><td class="v">+2</td><td class="v">+1</td><td class="v">+1</td></tr><tr><td><span class="dot" style="background:#8fca6b"></span>Pito de indoor</td><td class="v">+4</td><td class="v">+3</td><td class="v">+2</td></tr><tr><td><span class="dot" style="background:#e3c25e"></span>Blunt de porrito</td><td class="v">+2</td><td class="v">+1</td><td class="v">+1</td></tr><tr><td><span class="dot" style="background:#e3c25e"></span>Blunt de regular</td><td class="v">+3</td><td class="v">+2</td><td class="v">+1</td></tr><tr><td><span class="dot" style="background:#e3c25e"></span>Blunt de indoor</td><td class="v">+5</td><td class="v">+4</td><td class="v">+3</td></tr></tbody>
+      </table></div>
+      <p class="small">El pito y el blunt se comparten; el pipazo, el bongazo y el bombazo son de uno solo. El que pone el cogollo suma +1. Después de un individual tiras 1d6: con un 1 quedas tosiendo y pierdes tu próximo turno.</p>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="h-mazos">
+  <div class="sec-head"><span class="eyebrow">Solo dos mazos</span><h2 id="h-mazos">Insumos y Acción</h2></div>
+  <div class="two">
+    <div class="panel">
+      <h3>Insumos · 40 cartas</h3>
+      <div class="tbl-wrap"><table><tbody>
+        <tr><td>Cogollo regular</td><td class="v">14</td></tr>
+        <tr><td>Porrito (la Peluquería y otras manos)</td><td class="v">12</td></tr>
+        <tr><td>Indoor supremo</td><td class="v">4</td></tr>
+        <tr><td>Papelillo</td><td class="v">10</td></tr>
+      </tbody></table></div>
+    </div>
+    <div class="panel">
+      <h3>Acción · 50 cartas</h3>
+      <div class="tbl-wrap"><table><tbody>
+        <tr><td><b>Inmediata</b></td><td>Se cumple apenas la robas: retos, castigos, regalos.</td><td class="v">20</td></tr>
+        <tr><td><b>Trampa</b></td><td>Boca abajo frente a ti, como en Yu-Gi-Oh. Se activa cuando pasa lo que dice.</td><td class="v">18</td></tr>
+        <tr><td><b>Guardable</b></td><td>A tu mano. La juegas cuando quieras, también en el turno de otro.</td><td class="v">12</td></tr>
+      </tbody></table></div>
+      <p class="small">No hay límite de cartas en la mano. Lo que limita es cuándo robas: solo cuando una casilla o un evento te lo dice. Y todo se puede regalar, cambiar o negociar en cualquier momento.</p>
+    </div>
+  </div>
+  <div class="cards" id="cards"><div class="card"><div class="card-in"><div class="card-top" style="background:#e7b94c;color:#2b1a0e"><span>Acción</span><span>Inmediata</span></div><div class="card-name">Lámele la pata al Diego</div><div class="card-txt">Si el Diego está jugando. Si te niegas, pagas el peaje: un insumo al centro.</div></div></div><div class="card"><div class="card-in"><div class="card-top" style="background:#e7b94c;color:#2b1a0e"><span>Acción</span><span>Inmediata</span></div><div class="card-name">Vuelta de carnero</div><div class="card-txt">Ahora, frente a todos. Si la haces, +1 de humo.</div></div></div><div class="card"><div class="card-in"><div class="card-top" style="background:#e7b94c;color:#2b1a0e"><span>Acción</span><span>Inmediata</span></div><div class="card-name">Te pilló el inspector</div><div class="card-txt">Anotación negativa: directo a la Patrona.</div></div></div><div class="card trap"><div class="card-in"><div class="card-top" style="background:#5b3f8f;color:#f3eaff"><span>Acción</span><span>Trampa</span></div><div class="card-name">Llegó tu mamá</div><div class="card-txt">Actívala cuando otro jugador gire la ruleta: esa fumada vale 0 para él.</div></div></div><div class="card trap"><div class="card-in"><div class="card-top" style="background:#5b3f8f;color:#f3eaff"><span>Acción</span><span>Trampa</span></div><div class="card-name">Era orégano</div><div class="card-txt">Actívala cuando alguien ponga un indoor en su bandeja: se descarta.</div></div></div><div class="card trap"><div class="card-in"><div class="card-top" style="background:#5b3f8f;color:#f3eaff"><span>Acción</span><span>Trampa</span></div><div class="card-name">La Cucaracha escondida</div><div class="card-txt">Actívala cuando alguien caiga en tu casilla: le pasas la Cucaracha.</div></div></div><div class="card"><div class="card-in"><div class="card-top" style="background:#6fa6dc;color:#0f2a48"><span>Acción</span><span>Guardable</span></div><div class="card-name">Escudo</div><div class="card-txt">Anula un susto, una casilla roja o una trampa contra ti.</div></div></div><div class="card"><div class="card-in"><div class="card-top" style="background:#6fa6dc;color:#0f2a48"><span>Acción</span><span>Guardable</span></div><div class="card-name">Chocman</div><div class="card-txt">En el clímax de un evento: zafas del susto y ganas +1.</div></div></div><div class="card"><div class="card-in"><div class="card-top" style="background:#6fa6dc;color:#0f2a48"><span>Acción</span><span>Guardable</span></div><div class="card-name">Te robé el encendedor</div><div class="card-txt">Le quitas un encendedor a cualquier jugador. Clásico.</div></div></div></div>
+</section>
+
+<section aria-labelledby="h-evento">
+  <div class="sec-head"><span class="eyebrow">El corazón del juego</span><h2 id="h-evento">El Evento Malulo</h2></div>
+  <p>Al final de cada ronda todos van juntos a un evento: la junta donde el Esteban, el asado donde el Felipe, un partido en el Guaye. Cada uno tiene cuatro etapas: llegada (las reglas de la casa), desarrollo (se fuma), clímax (los sustos) y desenlace (el bajón). En el clímax todos eligen al mismo tiempo con una carta boca abajo:</p>
+  <div class="choices">
+    <div class="choice"><b>Me quedo</b><span>Te comes el susto si hay, pero si no hay, +1.</span></div>
+    <div class="choice"><b>Me escondo</b><span>Zafas del susto, pero no ganas nada en el clímax.</span></div>
+    <div class="choice"><b>Me voy</b><span>Guardas lo fumado, pero te pierdes el bajón.</span></div>
+  </div>
+  <p class="small">Los eliminados por el Opitz siguen jugando como fantasmas: roban y juegan cartas de Acción para molestar.</p>
+</section>
+
+<section aria-labelledby="h-final">
+  <div class="sec-head"><span class="eyebrow">Cómo termina</span><h2 id="h-final">La Pálida</h2></div>
+  <div class="two">
+    <div class="panel">
+      <ul>
+        <li>Cuando llegas a la línea de tu frasco, estás en La Pálida.</li>
+        <li>El siguiente evento es tu prueba final: en el clímax todos tiran el d20 grande.</li>
+        <li>Si lo terminas todavía sobre la línea, ganas. Si varios lo logran, gana el frasco más lleno.</li>
+        <li>Si un susto te baja, el juego sigue y vuelves a intentarlo.</li>
+        <li>Al final la app reparte títulos para todos: el que más tosió, el rey del porrito, el mejor fantasma.</li>
+      </ul>
+      <p class="small">Metas para probar: Modo Pito 15, Modo Caño 25, Modo Sesión 40.</p>
+    </div>
+    <div class="panel">
+      <div class="tbl-wrap"><table>
+        <thead><tr><th class="v">d20</th><th>Qué pasa</th></tr></thead>
+        <tbody id="t-d20"><tr><td class="v">1</td><td>Sicosis total: pierdes 5.</td></tr><tr><td class="v">2–4</td><td>Susto: pierdes 3.</td></tr><tr><td class="v">5–8</td><td>No pasa nada.</td></tr><tr><td class="v">9–12</td><td>Último pito de la noche: +2.</td></tr><tr><td class="v">13–15</td><td>Le robas 2 al que va ganando.</td></tr><tr><td class="v">16–18</td><td>Giras la ruleta gratis, como si tuvieras porrito.</td></tr><tr><td class="v">19</td><td>Cambias tu frasco con el de otro jugador.</td></tr><tr><td class="v">20</td><td>Bombazo de porrito: +10.</td></tr></tbody>
+      </table></div>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="h-falta">
+  <div class="cta">
+    <span class="eyebrow">Tu parte · hasta el domingo 1 de noviembre</span>
+    <h2 id="h-falta">Ahora necesitamos tus historias</h2>
+    <p>Las reglas ya están. Lo que falta es lo que lo hace nuestro juego. Son unos 15 minutos, todo en un formulario:</p>
+    <ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px">
+      <li><b>Tus eventos:</b> los lugares y juntas que sí o sí tienen que estar, qué pasaba ahí y la anécdota que siempre se cuenta. Si tienes casa en la lista, parte por la tuya.</li>
+      <li><b>5 cartas de Acción:</b> retos, castigos, regalos o trampas. La pata del Diego es el estándar.</li>
+      <li><b>El poder de un amigo:</b> te tocó escribir el de otro (mira la tabla). Después los balanceamos todos juntos.</li>
+    </ul>
+    <div><a class="btn main" id="form-link" href="#" style="display:inline-block;text-decoration:none" hidden="">Responder el formulario</a></div>
+    <p class="small" id="form-note">Renato te manda el enlace del formulario por WhatsApp. ¿Te da lata escribir? Mándale un audio contestando lo mismo.</p>
+  </div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Quién</th><th>Tu evento</th><th>Escribes el poder de</th></tr></thead>
+    <tbody>
+      <tr><td>Esteban</td><td>Junta donde el Esteban (revisar) y la casa del Lennon</td><td>Chino</td></tr>
+      <tr><td>Diego</td><td>Junta donde el Diego (revisar)</td><td>Mati</td></tr>
+      <tr><td>Mati</td><td>El depa del Mati</td><td>Esteban</td></tr>
+      <tr><td>Weida</td><td>La casa del Weida</td><td>Shago</td></tr>
+      <tr><td>Chino</td><td>Junta donde el Chino (revisar)</td><td>Koke</td></tr>
+      <tr><td>Simón</td><td>Junta donde el Simón (revisar)</td><td>Francisco</td></tr>
+      <tr><td>Felipe</td><td>Asado donde el Felipe (revisar)</td><td>Sebastián</td></tr>
+      <tr><td>Francisco</td><td>Un partido: el Guaye, el Panul o la Jin Jan</td><td>Simón</td></tr>
+      <tr><td>Shago</td><td>Carrete donde el Shago (revisar)</td><td>Weida</td></tr>
+      <tr><td>Sebastián</td><td>Un bajón: el Remanso, el Papayón o el Tío Coco</td><td>Diego</td></tr>
+      <tr><td>Max</td><td>La casa del Max</td><td>Daniel</td></tr>
+      <tr><td>Koke</td><td>La casa del Koke (desde Irlanda, por audio)</td><td>Max</td></tr>
+      <tr><td>Daniel</td><td>La casa del Daniel</td><td>Felipe</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small">"Revisar" significa que ya hay una versión escrita: agrégale lo que falte. El sorteo de poderes se hizo el 18 de octubre.</p>
+  <div class="two">
+    <div class="panel"><span class="eyebrow">El calendario</span>
+      <ul>
+        <li><b>1 de noviembre:</b> se cierra el formulario.</li>
+        <li><b>21 de noviembre:</b> primera partida digital.</li>
+        <li><b>Año Nuevo:</b> primera partida en la mesa, con el prototipo impreso.</li>
+        <li><b>Fines de enero:</b> primera edición, con arte y caja.</li>
+      </ul></div>
+    <div class="panel"><span class="eyebrow">Ojo</span>
+      <p class="small">Todo lo de esta página es un borrador. Si algo no te tinca, ponlo en los comentarios del formulario.</p></div>
+  </div>
+</section>
+
+</div>
+
+<script>
+try{var nj=document.getElementById('nojs');if(nj)nj.parentNode.removeChild(nj);}catch(e){}
+/* Pega aquí el enlace de tu Google Forms */
+const FORM_URL='';
+(function(){
+const fl=document.getElementById('form-link');
+if(FORM_URL){fl.href=FORM_URL;fl.target='_blank';fl.rel='noopener';}else{fl.hidden=true;document.getElementById('form-note').textContent='Renato te manda el enlace del formulario por WhatsApp. ¿Te da lata escribir? Mándale un audio contestando lo mismo.';}
+})();
+(function(){
+const rnd=n=>Math.floor(Math.random()*n), d6=()=>1+rnd(6), d20=()=>1+rnd(20);
+const pick=a=>a[rnd(a.length)];
+const M=[
+  {k:'pito',n:'Pito',p:35,c:'#8fca6b',share:true, v:[1,2,4]},
+  {k:'blunt',n:'Blunt',p:25,c:'#e3c25e',share:true, v:[2,3,5]},
+  {k:'pipazo',n:'Pipazo',p:20,c:'#e48f5c',share:false,v:[2,3,5]},
+  {k:'bong',n:'Bongazo',p:15,c:'#6fa6dc',share:false,v:[3,5,7]},
+  {k:'bomba',n:'Bombazo',p:5,c:'#e0433b',share:false,v:[10,6,8]}
+];
+const Q=['Porrito','Regular','Indoor'];
+let acc=0;M.forEach(m=>{m.a0=acc*3.6;acc+=m.p;m.a1=acc*3.6;});
+function pt(a,r){const t=(a-90)*Math.PI/180;return [160+r*Math.cos(t),160+r*Math.sin(t)];}
+function wedges(sw){return M.map(m=>{const [x0,y0]=pt(m.a0,150),[x1,y1]=pt(m.a1,150);return '<path d="M160 160 L'+x0+' '+y0+' A150 150 0 '+(m.a1-m.a0>180?1:0)+' 1 '+x1+' '+y1+' Z" fill="'+m.c+'" stroke="#120b07" stroke-width="'+sw+'"/>';}).join('')+'<circle cx="160" cy="160" r="150" fill="none" stroke="#d9a441" stroke-width="10"/>';}
+const D20=[[1,1,'Sicosis total: pierdes 5.',-5],[2,4,'Susto: pierdes 3.',-3],[5,8,'No pasa nada.',0],[9,12,'Último pito de la noche: +2.',2],[13,15,'Le robas 2 al que va ganando.',2],[16,18,'Giras la ruleta gratis, como si tuvieras porrito.','spin'],[19,19,'Cambias tu frasco con el de otro jugador.',0],[20,20,'Bombazo de porrito: +10.',10]];
+
+document.getElementById('t-base').innerHTML=M.map(m=>'<tr><td><span class="dot" style="background:'+m.c+'"></span>'+m.n+'</td>'+m.v.map((x,i)=>'<td class="v'+(m.k==='bomba'&&i===0?' combo':'')+'">+'+x+'</td>').join('')+'</tr>').join('');
+const adj=n=>n<=2?0:n<=4?-1:-2;
+document.getElementById('t-share').innerHTML=M.filter(m=>m.share).flatMap(m=>Q.map((q,i)=>'<tr><td><span class="dot" style="background:'+m.c+'"></span>'+m.n+' de '+q.toLowerCase()+'</td>'+[1,3,5].map(n=>'<td class="v">+'+Math.max(1,m.v[i]+adj(n))+'</td>').join('')+'</tr>')).join('');
+document.getElementById('t-d20').innerHTML=D20.map(r=>'<tr><td class="v">'+(r[0]===r[1]?r[0]:r[0]+'–'+r[1])+'</td><td>'+r[2]+'</td></tr>').join('');
+
+const ACC=[
+ ['Inmediata','Lámele la pata al Diego','Si el Diego está jugando. Si te niegas, pagas el peaje: un insumo al centro.',0],
+ ['Inmediata','Vuelta de carnero','Ahora, frente a todos. Si la haces, +1 de humo.',1],
+ ['Inmediata','Pasaron los pacos','Pierdes 2 de humo, o entregas tu cogollo para zafar.',-2],
+ ['Inmediata','Te pilló el inspector','Anotación negativa: directo a la Patrona.','patrona'],
+ ['Inmediata','Pito regalado','Alguien te convidó: +1 de humo.',1],
+ ['Trampa','Llegó tu mamá','Actívala cuando otro jugador gire la ruleta: esa fumada vale 0 para él.',null],
+ ['Trampa','Era orégano','Actívala cuando alguien ponga un indoor en su bandeja: se descarta.',null],
+ ['Trampa','La Cucaracha escondida','Actívala cuando alguien caiga en tu casilla: le pasas la Cucaracha.',null],
+ ['Guardable','Escudo','Anula un susto, una casilla roja o una trampa contra ti.',null],
+ ['Guardable','Te robé el encendedor','Le quitas un encendedor a cualquier jugador. Clásico.',null],
+ ['Guardable','Chocman','En el clímax de un evento: zafas del susto y ganas +1.',null],
+ ['Guardable','Otra vuelta','Después de girar la ruleta, vuelves a girar y te quedas con el que quieras.',null]
+];
+const KC={Inmediata:['#e7b94c','#2b1a0e'],Trampa:['#5b3f8f','#f3eaff'],Guardable:['#6fa6dc','#0f2a48']};
+document.getElementById('cards').innerHTML=[0,1,3,5,6,7,8,10,9].map(i=>ACC[i]).map(c=>'<div class="card'+(c[0]==='Trampa'?' trap':'')+'"><div class="card-in"><div class="card-top" style="background:'+KC[c[0]][0]+';color:'+KC[c[0]][1]+'"><span>Acción</span><span>'+c[0]+'</span></div><div class="card-name">'+c[1]+'</div><div class="card-txt">'+c[2]+'</div></div></div>').join('');
+
+const corners={0:['Casa del Esteban','Casa del Esteban','Salida. Cada vez que pasas, robas una carta de Insumos.'],10:['Patrona','Patrona','La cárcel. Quedas castigado y pierdes tu próximo turno (o sales con dobles).'],20:['Tío Coco','Tío Coco','Perdiste la dignidad: entregas un insumo o te llevas la Cucaracha.'],30:['Los Bloques','Los Bloques','Junta casera: robas 2 Insumos y te quedas con uno.']};
+const pat=['V','R','V','A','V','V','R','A','V'];
+const names=[{V:['Plaza del Esteban','Plaza del Diego','Feria La Frontera'],R:['Cementerio']},{V:['La Araucana','Kiosco de la Nona','Plaza del colegio'],R:['Inspectoría']},{V:['El Panul','El Guaye','La Jin Jan','Terminal de buses'],R:[]},{V:['Ropita lo Bio','El Remanso','Papayón'],R:['Kenny Pilcha']}];
+const SHORT={'Plaza del Esteban':'Plaza Esteban','Plaza del Diego':'Plaza Diego','Feria La Frontera':'Feria','Cementerio':'Cemen­terio','La Araucana':'Arau­cana','Kiosco de la Nona':'Nona','Plaza del colegio':'Plaza cole','Inspectoría':'Inspec­toría','El Panul':'Panul','El Guaye':'Guaye','La Jin Jan':'Jin Jan','Terminal de buses':'Termi­nal','Ropita lo Bio':'Ropita','El Remanso':'Remanso','Papayón':'Papa­yón','Kenny Pilcha':'Kenny'};
+const TXT={V:'Robas una carta de Insumos. Si estás aquí al empezar el evento, cada fumada vale +1.',R:'Pierdes 1 de humo. Si estás aquí al empezar el evento, cada fumada vale −1.',A:'Robas una carta de Acción.',O:'Tiras 1d6. Con un 1 te quedaste pegado: con eliminación activada quedas fuera como fantasma; en la demo vacías la mitad del frasco. Con 2 o 3, −2. Con 4 a 6 zafaste.'};
+const TN={V:'Casilla verde',R:'Casilla roja',A:'Acción',O:'El Opitz'};
+const board=document.getElementById('board'), cellinfo=document.getElementById('cellinfo');
+board.innerHTML='';
+const ring=[];for(let c=10;c>=0;c--)ring.push([10,c]);for(let r=9;r>=0;r--)ring.push([r,0]);for(let c=1;c<11;c++)ring.push([0,c]);for(let r=1;r<10;r++)ring.push([r,10]);
+const CELLS=[]; let S;
+ring.forEach((p,i)=>{
+  const el=document.createElement('div'); el.className='cell'; el.tabIndex=0; el.setAttribute('role','button');
+  el.style.gridRow=p[0]+1; el.style.gridColumn=p[1]+1;
+  let t,nm=null,txt;
+  if(corners[i]){t='X';nm=corners[i][0];txt=corners[i][2];el.innerHTML='<span class="lbl">'+corners[i][1]+'</span>';}
+  else{const side=Math.floor(i/10),pos=(i%10)-1;t=pat[pos];if(pos===4&&(side===1||side===3))t='O';
+    if(t==='V'||t==='R'){const k=pat.slice(0,pos).filter(x=>x===t).length-((t==='V'&&pos>4&&(side===1||side===3))?1:0);nm=(names[side][t]||[])[k]||null;}
+    el.innerHTML='<span class="lbl">'+(t==='A'?'?':t==='O'?'Opitz':nm?(SHORT[nm]||nm):'')+'</span>';txt=TXT[t];}
+  el.classList.add('c-'+t);
+  el.setAttribute('aria-label',nm||TN[t]);
+  CELLS.push({el,t,nm,txt});
+  const show=()=>{CELLS.forEach(c=>c.el.classList.remove('sel'));el.classList.add('sel');cellinfo.innerHTML='<b>'+(nm?nm+' ('+(TN[t]||'esquina').toLowerCase()+')':TN[t])+'.</b> '+txt+(S&&S.chino===i?' Aquí está el <b>Tío Chino</b>: si pasas o caes, le puedes comprar.':'');};
+  el.addEventListener('click',show);el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();show();}});
+  board.appendChild(el);
+});
+const ctr=document.createElement('div');ctr.className='center';
+ctr.innerHTML='<div class="t">Porropoli</div><div class="decks"><div class="deck" style="background:#b8dc97;color:#1f3a10">Insumos</div><svg class="mini-wheel" viewBox="0 0 320 320" aria-hidden="true">'+wedges(3)+'</svg><div class="deck" style="background:#e7b94c;color:#2b1a0e">Acción</div></div>';
+board.appendChild(ctr);
+
+const GOAL=15;
+function fresh(){return {pos:0,humo:0,pap:0,cogs:[],hand:[],turn:0,round:1,skip:false,chino:13,palida:false,final:false,phase:'turn',stage:-1,ev:null,choice:null,polen:false,mod:0,smoked:0};}
+const $=id=>document.getElementById(id);
+const msg=$('msg'), act=$('actions');
+function drawInsumo(){const r=rnd(40); if(r<14) return 'c1'; if(r<26) return 'c0'; if(r<30) return 'c2'; return 'pap';}
+function giveInsumo(x){if(x==='pap'){S.pap++;return 'un papelillo';} const q=+x[1];S.cogs.push(q);return 'un cogollo '+Q[q].toLowerCase();}
+function addHumo(n){S.humo=Math.max(0,S.humo+n);}
+function render(){
+  CELLS.forEach((c,i)=>{c.el.querySelectorAll('.token,.chino').forEach(x=>x.remove());
+    if(i===S.pos){const t=document.createElement('span');t.className='token';c.el.appendChild(t);}
+    if(i===S.chino){const t=document.createElement('span');t.className='chino';c.el.appendChild(t);}});
+  $('n-pap').textContent=S.pap; $('n-cog').textContent=S.cogs.length;
+  $('s-pap').classList.toggle('on',S.pap>0); $('s-cog').classList.toggle('on',S.cogs.length>0);
+  $('coglist').textContent=S.cogs.length?'Cogollos: '+S.cogs.map(q=>Q[q].toLowerCase()).join(', ')+'.':'Sin cogollo todavía.';
+  $('humo').textContent=S.humo; $('jarfill').style.width=Math.min(100,S.humo/20*100)+'%';
+  $('jarnote').textContent=S.palida?'¡Estás en La Pálida! Aguanta el próximo evento sobre la línea.':'La línea roja es La Pálida ('+GOAL+').';
+  const h=$('hand'); h.innerHTML=S.hand.length?S.hand.map(c=>'<span class="hc" style="background:'+KC[c[0]][0]+';color:'+KC[c[0]][1]+'">'+c[1]+'</span>').join(''):'<span class="small">Ninguna.</span>';
+  const sb=$('stagebar'); sb.hidden=S.phase!=='event'; [...sb.children].forEach((s,i)=>s.classList.toggle('on',i===S.stage));
+}
+function say(k,h,lines){msg.innerHTML='<span class="k">'+k+'</span><div class="h">'+h+'</div>'+(lines||[]).map(l=>'<div class="l">'+l+'</div>').join('');}
+function buttons(list){act.innerHTML='';list.forEach(([label,fn,main,id])=>{const b=document.createElement('button');b.className='btn'+(main?' main':'');b.textContent=label;if(id)b.id=id;b.addEventListener('click',fn);act.appendChild(b);});}
+function cellName(i){const c=CELLS[i];return c.nm||({V:'una casilla verde',R:'una casilla roja',A:'una casilla de acción',O:'el Opitz'})[c.t];}
+function cellColorMod(){const t=CELLS[S.pos].t;return t==='V'?1:t==='R'?-1:0;}
+const nextLabel=()=>S.turn>=3?'Ir al Evento Malulo':'Siguiente tirada';
+
+function startTurn(){
+  render();
+  if(S.turn>=3) return startEvent();
+  if(S.skip){S.skip=false;S.turn++;render();say('Ronda '+S.round+' · tirada '+S.turn+' de 3','Sigues castigado en la Patrona',['Pierdes esta tirada.']);buttons([[nextLabel(),startTurn,true,'b-next']]);return;}
+  say('Ronda '+S.round+' · tirada '+(S.turn+1)+' de 3','Tu turno',['Tira el dado y avanza.']);
+  buttons([['Tirar el dado',roll,true,'b-roll']]);
+}
+function roll(){
+  const d=d6(), from=S.pos; let passedHome=false, passedChino=false;
+  for(let k=1;k<d;k++){const p=(from+k)%40; if(p===0) passedHome=true; if(p===S.chino) passedChino=true;}
+  S.pos=(from+d)%40; S.turn++;
+  const lines=[]; if(passedHome) lines.push('Pasaste por la Casa del Esteban: te llevas '+giveInsumo(drawInsumo())+'.');
+  const c=CELLS[S.pos]; const h='Sacaste '+d+': caes en '+cellName(S.pos);
+  if(c.t==='V') lines.push('Robas una carta de Insumos: '+giveInsumo(drawInsumo())+'.');
+  else if(c.t==='R'){addHumo(-1);lines.push('Pierdes 1 de humo.');}
+  else if(c.t==='A'){const card=pick(ACC);lines.push('Robas una carta de Acción: <b>'+card[1]+'</b> ('+card[0].toLowerCase()+'). '+card[2]);
+    if(card[0]==='Inmediata'){ if(card[3]==='patrona'){S.pos=10;S.skip=true;lines.push('Te vas a la Patrona.');} else if(typeof card[3]==='number'&&card[3]!==0) addHumo(card[3]); }
+    else {S.hand.push(card);lines.push(card[0]==='Trampa'?'La dejas boca abajo frente a ti.':'Va a tu mano.');}}
+  else if(c.t==='O'){const r=d6();if(r===1){const l=Math.floor(S.humo/2);addHumo(-l);lines.push('Dado: 1. Te quedaste pegado con el Opitz: vacías la mitad del frasco (−'+l+'). Con eliminación activada, quedarías fuera como fantasma.');}else if(r<=3){addHumo(-2);lines.push('Dado: '+r+'. Te habló una hora: −2.');}else lines.push('Dado: '+r+'. Zafaste.');}
+  else if(S.pos===10){S.skip=true;lines.push('Quedas castigado: pierdes tu próximo turno.');}
+  else if(S.pos===20){if(S.pap>0){S.pap--;lines.push('Perdiste la dignidad: entregas un papelillo.');}else if(S.cogs.length){S.cogs.pop();lines.push('Perdiste la dignidad: entregas un cogollo.');}else lines.push('No tenías nada que entregar: te llevas la Cucaracha.');}
+  else if(S.pos===30){const val=x=>x==='c2'?3:x==='c1'?2:x==='pap'?1.5:1;const a=drawInsumo(),b=drawInsumo();lines.push('Junta casera: robas dos y te quedas con '+giveInsumo(val(a)>=val(b)?a:b)+'.');}
+  else if(S.pos===0) lines.push('Caes justo en la Casa del Esteban: te llevas '+giveInsumo(drawInsumo())+'.');
+  const atChino=S.pos===S.chino||passedChino;
+  if(atChino) lines.push('El <b>Tío Chino</b> está aquí. ¿Le compras?');
+  render(); say('Ronda '+S.round+' · tirada '+S.turn+' de 3',h,lines);
+  const btns=[]; if(atChino) btns.push(['Comprarle al Tío Chino (3 de humo)',buyChino,false,'b-chino']);
+  btns.push([nextLabel(),startTurn,true,'b-next']); buttons(btns);
+}
+function buyChino(){
+  if(S.humo<3){say('Tío Chino','No te alcanza',['Necesitas 3 de humo en tu frasco para comprarle.']);buttons([[nextLabel(),startTurn,true,'b-next']]);return;}
+  addHumo(-3); const r=rnd(20); const lines=['Pagaste 3 de humo y sacaste a ciegas de la bolsa negra.'];let h;
+  if(r<7){S.cogs.push(0);h='Prensado paraguayo';lines.push('Cuenta como porrito. Si te sale bombazo, es el +10.');}
+  else if(r<12){S.cogs.push(0);h='Orégano';lines.push('En la partida real lo metes boca abajo en un compartido para engañar. En la demo cuenta como porrito.');}
+  else if(r<16){S.cogs.push(0);h='Cogollo mojado';lines.push('Cuenta como porrito.');}
+  else if(r<18){S.polen=true;h='Polen raro';lines.push('En tu próxima fumada giras la ruleta dos veces y te quedas con la mejor.');}
+  else {addHumo(5);h='¡Estrella negra!';lines.push('+5 de humo que nadie te puede sacar.');}
+  let v=S.chino; const mv=d6()+d6(); for(let k=1;k<=40;k++){v=(v+1)%40; if(k>=mv&&CELLS[v].t==='V') break;}
+  S.chino=v; lines.push('El Tío Chino se cambia de casilla.');
+  render(); say('Tío Chino · mercado negro',h,lines);
+  buttons([[nextLabel(),startTurn,true,'b-next']]);
+}
+
+const EV=[
+ {n:'Junta donde el Esteban',st:['Cada uno elige su spot: el quincho, seguro, o el techo, donde pega más pero te pueden ver los vecinos.','Se fuma. En el techo, cada fumada daría +1 extra.','¿Los vieron los vecinos desde el techo?','Bajón en la casa del Esteban.']},
+ {n:'Junta donde el Simón',st:['Solo se fuma después de la 1 AM. El que pierde sale a comprar Chocman.','Pasada la 1 AM, se fuma.','¿Despertó alguien en la casa?','Chocman para todos.']},
+ {n:'Junta donde el Diego',st:['Todo depende del dado de la casa sola.','Se fuma. Con casa sola, los pitos pegarían +1.','¿Llega la mamá del Diego?','Si zafaron, bajón tranquilo.']},
+ {n:'Junta donde el Chino',st:['Bongazo en la pieza, música y Switch.','Se fuma. Hay duelo de Switch.','¿Pasa algo en la pieza?','Con suerte, la mamá del Chino trae un buen bajón.']},
+ {n:'Asado donde el Felipe',st:['Con asado la volada pega más.','Se fuma junto a la parrilla.','La piscina: ¿quién se cae? Casi siempre el Miguel.','Se acaba el asado.']},
+ {n:'Carrete donde el Shago',st:['No hay reglas: hay que llegar con onda. Aportas algo o bailas.','Se fuma de día en la piscina.','¿Le salta la liebre a alguien?','Bajón de madrugada.']}
+];
+function startEvent(){
+  S.phase='event'; S.stage=0; S.ev=pick(EV); S.mod=cellColorMod(); S.smoked=0; S.final=S.palida;
+  render();
+  const lines=[S.ev.st[0]];
+  lines.push(S.mod>0?'Llegas desde casilla verde: cada fumada tuya vale +1.':S.mod<0?'Llegas desde casilla roja: cada fumada tuya vale −1.':'Llegas desde una casilla sin color: sin bonus.');
+  if(S.final) lines.push('<b>Es tu prueba final:</b> en el clímax se tira el d20.');
+  say('Evento Malulo · etapa 1 de 4 · Llegada',S.ev.n,lines);
+  buttons([['Siguiente: a fumar',devel,true,'b-next']]);
+}
+function devel(){
+  S.stage=1; render();
+  const lines=[S.ev.st[1]];
+  if(!S.cogs.length){
+    const g=Math.max(0,1+S.mod); addHumo(g); render();
+    lines.push('No tienes cogollo. Te sumas al pito de otro aportando algo de tu bandeja: +'+g+'.');
+    say('Evento Malulo · etapa 2 de 4 · Desarrollo','Sin cogollo',lines);buttons([['Siguiente: el clímax',climax,true,'b-next']]);return;
+  }
+  say('Evento Malulo · etapa 2 de 4 · Desarrollo','Tienes '+S.cogs.length+' cogollo'+(S.cogs.length>1?'s':''),lines.concat(['Elige cuál fumar y gira la ruleta.']));
+  buttons([...new Set(S.cogs)].sort().map(q=>['Fumar '+Q[q].toLowerCase(),()=>spin(q),true,'b-q'+q]));
+}
+function chooseMethod(){const r=Math.random()*100;let a=0;for(const m of M){if(r<a+m.p)return m;a+=m.p;}return M[4];}
+let spins=0;
+function spin(q){
+  S.cogs.splice(S.cogs.indexOf(q),1);
+  let m=chooseMethod(), extra='';
+  if(S.polen){const m2=chooseMethod();const best=(m2.v[q]>m.v[q])?m2:m;extra='Polen raro: giraste dos veces ('+m.n+' y '+m2.n+') y te quedas con '+best.n+'. ';m=best;S.polen=false;}
+  act.innerHTML='<svg class="pwheel" viewBox="0 0 320 320" aria-hidden="true">'+wedges(4)+'<g id="pneedle"><polygon points="160,32 150,160 170,160" fill="#f1d08a" stroke="#120b07" stroke-width="2"/></g><circle cx="160" cy="160" r="18" fill="#2a1c13" stroke="#d9a441" stroke-width="3"/></svg><span class="small">Girando…</span>';
+  const nd=document.getElementById('pneedle'); spins+=4; const target=m.a0+(m.a1-m.a0)*(0.2+Math.random()*0.6);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{nd.style.transform='rotate('+(spins*360+target)+'deg)';}));
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  setTimeout(()=>{
+    const lines=[extra+'Salió <b>'+m.n+'</b> con '+Q[q].toLowerCase()+': base +'+m.v[q]+'.'];
+    let v=m.v[q];
+    if(m.k==='bomba'&&q===0) lines.push('¡Combinación maldita!');
+    if(m.share){ v+=1; if(S.pap>0){S.pap--;lines.push('Gastas un papelillo y fumas con otro. Pusiste el cogollo: +1.');} else lines.push('No tienes papelillo: se lo pides a otro, que entra gratis. Pusiste el cogollo: +1.'); }
+    else { const t=d6(); lines.push(t===1?'Dado de tos: 1. Te pegó mal: en la partida real pierdes tu próximo turno.':'Dado de tos: '+t+'. Aguantaste.'); }
+    if(S.mod){v=Math.max(0,v+S.mod);lines.push(S.mod>0?'Casilla verde: +1.':'Casilla roja: −1.');}
+    addHumo(v); S.smoked++; render();
+    say('Evento Malulo · etapa 2 de 4 · Desarrollo',m.n+' · +'+v+' de humo',lines);
+    const btns=[['Siguiente: el clímax',climax,true,'b-next']];
+    [...new Set(S.cogs)].sort().forEach(q2=>btns.push(['Fumar otro: '+Q[q2].toLowerCase(),()=>spin(q2),false,'b-q'+q2]));
+    buttons(btns);
+  }, reduce?60:2300);
+}
+function climax(){
+  S.stage=2; render();
+  say('Evento Malulo · etapa 3 de 4 · Clímax',S.ev.st[2],['Todos eligen al mismo tiempo con una carta boca abajo. ¿Tú qué haces?']);
+  const opts=[['Me quedo','quedo'],['Me escondo','escondo'],['Me voy','voy']];
+  const si=S.hand.findIndex(c=>c[1]==='Chocman'||c[1]==='Escudo');
+  const btns=opts.map(([l,k])=>[l,()=>resolveClimax(k,false),true,'b-'+k]);
+  if(si>=0) btns.push(['Jugar '+S.hand[si][1],()=>resolveClimax('quedo',true),false,'b-shield']);
+  buttons(btns);
+}
+function resolveClimax(k,shield){
+  S.choice=k; const lines=[]; const r=d6(); const susto=r<=2;
+  if(shield){const i=S.hand.findIndex(c=>c[1]==='Chocman'||c[1]==='Escudo');const c=S.hand.splice(i,1)[0];lines.push('Jugaste '+c[1]+': zafas del susto'+(c[1]==='Chocman'?' y ganas +1.':'.'));if(c[1]==='Chocman')addHumo(1);}
+  else {
+    lines.push('Dado del susto: '+r+'. '+(susto?'¡Hubo susto!':'No pasó nada.'));
+    if(k==='quedo'){ if(susto){addHumo(-2);lines.push('Te quedaste y te lo comiste: −2.');} else {addHumo(1);lines.push('Te quedaste y no pasó nada: +1.');} }
+    if(k==='escondo') lines.push('Te escondiste: no pierdes ni ganas.');
+    if(k==='voy') lines.push('Te fuiste antes: guardas lo fumado, pero te pierdes el bajón.');
+  }
+  if(S.final){const t=d20();const row=D20.find(x=>t>=x[0]&&t<=x[1]);lines.push('<b>d20 de la prueba final: '+t+'.</b> '+row[2]);
+    if(row[3]==='spin'){const m=chooseMethod();addHumo(m.v[0]);lines.push('Salió '+m.n+' de porrito: +'+m.v[0]+'.');} else addHumo(row[3]);}
+  render(); say('Evento Malulo · etapa 3 de 4 · Clímax',({quedo:'Me quedo',escondo:'Me escondo',voy:'Me voy'})[k],lines);
+  buttons([['Siguiente: el desenlace',ending,true,'b-next']]);
+}
+function ending(){
+  S.stage=3; const lines=[S.ev.st[3]];
+  if(S.choice!=='voy'){addHumo(1);lines.push('Bajón: +1.');} else lines.push('Ya te habías ido: sin bajón.');
+  render();
+  if(S.final&&S.humo>=GOAL){say('Evento Malulo · etapa 4 de 4 · Desenlace','¡Ganaste la partida!',lines.concat(['Aguantaste toda tu prueba final sobre La Pálida, con '+S.humo+' de humo, en la ronda '+S.round+'.']));buttons([['Jugar de nuevo',reset,true,'b-reset']]);return;}
+  if(S.final){S.palida=false;lines.push('Te bajaron de La Pálida. El juego sigue: vuelve a subir.');}
+  else if(S.humo>=GOAL){S.palida=true;lines.push('<b>¡Llegaste a La Pálida!</b> El próximo evento es tu prueba final.');}
+  render(); say('Evento Malulo · etapa 4 de 4 · Desenlace','Fin del evento',lines);
+  buttons([['Siguiente ronda',()=>{S.phase='turn';S.stage=-1;S.turn=0;S.round++;startTurn();},true,'b-next']]);
+}
+function reset(){S=fresh();giveInsumo(drawInsumo());giveInsumo(drawInsumo());render();
+  const got=[];if(S.cogs.length) got.push(S.cogs.map(q=>'cogollo '+Q[q].toLowerCase()).join(' y '));if(S.pap) got.push(S.pap+' papelillo'+(S.pap>1?'s':''));
+  say('Preparación','Tu bandeja inicial',['Ganaste el 2d6: tienes moledor y encendedor.','Robaste 2 cartas de Insumos: '+got.join(' y ')+'.','La estrella negra del tablero es el Tío Chino.']);
+  buttons([['Empezar',startTurn,true,'b-start']]);}
+reset();
+})();
+</script>
+
+
+
+</body></html>
